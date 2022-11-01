@@ -7,7 +7,7 @@ import pyttsx3
 
 cv2.startWindowThread()
 cap = cv2.VideoCapture(0)
-
+num=0
 model = keras.models.load_model('traffic_classifier.h5')
 classes = { 0:'Speed limit (20km/h)',
             1:'Speed limit (30km/h)',
@@ -59,27 +59,55 @@ while(True):
     # reading the frame
     t="null"
     ret, img = cap.read()
-    height,width,channels=img.shape
-    scale_value=width/height
-    img_resized=cv2.resize(img,size,interpolation=cv2.INTER_AREA)
-    img_array=np.asarray(img_resized)
+    height, width, channels = img.shape
+    scale_value = width / height
+    img_resized = cv2.resize(img, size, interpolation=cv2.INTER_AREA)
+    img_array = np.asarray(img_resized)
 
-    normalized_img_array=(img_array.astype(np.float32)/127.0)-1
-    data[0]=img_array
-    prediction=model.predict(data)
-    index=np.argmax(prediction)
-    class_name=classes[index]
-    confidence_score=prediction[0][index]
+    normalized_img_array = (img_array.astype(np.float32) / 127.0) - 1
+    data[0] = img_array
+    prediction = model.predict(data)
+    index = np.argmax(prediction)
+    class_name = classes[index]
+    confidence_score = prediction[0][index]
     print(class_name)
-    if class_name!=t:
+    # cv2.putText(img, class_name, (75, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 2)
+    # cv2.putText(img, str(float("{:.2f}".format(confidence_score * 100))) + "%", (75, 100), cv2.FONT_HERSHEY_SIMPLEX,
+    #             1.5, (0, 255, 0), 2)
 
+    k = cv2.waitKey(5)
+
+    if k == 27:
+        break
+    elif k == ord('s'):  # wait for 's' key to save and exit
+        image = cap.read()[1]
+        cv2.imwrite("C://Users//Admin//Documents//demo//"+str(num)+".png", image)
+        print("image saved!")
+        img = cv2.imread("C://Users//Admin//Documents//demo//"+str(num)+".png")
+        height, width, channels = img.shape
+        scale_value = width / height
+        img_resized = cv2.resize(img, size, interpolation=cv2.INTER_AREA)
+        img_array = np.asarray(img_resized)
+
+        normalized_img_array = (img_array.astype(np.float32) / 127.0) - 1
+        data[0] = img_array
+        prediction = model.predict(data)
+        index = np.argmax(prediction)
+        class_name = classes[index]
+        confidence_score = prediction[0][index]
+        print(class_name)
         engine.say(class_name)
         engine.runAndWait()
-    t = class_name
 
+        cv2.imshow('frame', image)
 
-    cv2.putText(img,class_name,(75,50),cv2.FONT_HERSHEY_SIMPLEX,1.5,(0,255,0),2)
-    cv2.putText(img,str(float("{:.2f}".format(confidence_score*100)))+"%",(75,100),cv2.FONT_HERSHEY_SIMPLEX,1.5,(0,255,0),2)
+        num += 1
+
+    elif k == ord('q'):
+        # breaking the loop if the user types q
+        # note that the video window must be highlighted!
+        break
+
 
 
 
@@ -89,12 +117,6 @@ while(True):
     #cv2.rectangle(img, (25, 25), (300, 300), (0, 255, 0), 2)
     cv2.imshow('frame',img)
 
-
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        # breaking the loop if the user types q
-        # note that the video window must be highlighted!
-        break
 
 cap.release()
 cv2.destroyAllWindows()
